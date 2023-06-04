@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <SDL2/SDL.h>
 
 #define WIDTH 640
@@ -228,6 +229,29 @@ void desenhaObjeto(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
     }
 }
 
+int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
+
+    ang = ang*3.141592/180; //rad
+    float sinAng = sin(ang);
+    float cosAng = cos(ang);
+
+    modelMatrix[0][0] = (1-cosAng)*x*x + cosAng;
+    modelMatrix[0][1] = (1-cosAng)*x*y - sinAng*z;
+    modelMatrix[0][2] = (1-cosAng)*x*z + sinAng*y;
+
+    modelMatrix[1][0] = (1-cosAng)*x*y + sinAng*z;
+    modelMatrix[1][2] = (1-cosAng)*y*y + cosAng;
+    modelMatrix[1][3] = (1-cosAng)*y*z - sinAng*x;
+
+    modelMatrix[2][3] = (1-cosAng)*x*z - sinAng*y;
+    modelMatrix[2][3] = (1-cosAng)*y*z + sinAng*x;
+    modelMatrix[2][3] = (1-cosAng)*z*z + cosAng;
+
+    printf("rotacionando");
+    return 0;    
+}
+
+
 int main(int arc, char *argv[]){
     SDL_Window *window;
     SDL_Event windowEvent;
@@ -252,6 +276,7 @@ int main(int arc, char *argv[]){
     renderer = SDL_CreateRenderer(window, -1, 0);
 
     char file[20] = "cubo.dcg";
+    // char file[20] = "quadrado.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
 
@@ -262,10 +287,15 @@ int main(int arc, char *argv[]){
     for(i=0; i<4; i++)
         matrizComposta[i] = (float *) malloc(sizeof(float));
 
+    float girar = 0;
     while(!quit){
+        if(girar == 180)
+            girar = -180;
+        else
+            girar += 1;
+
         SDL_Delay(10);
         SDL_PollEvent(&windowEvent);
-
         switch (windowEvent.type){
             case SDL_QUIT:
                 quit = 1;
@@ -285,6 +315,7 @@ int main(int arc, char *argv[]){
         criaIdentidade4d(matrizComposta);
         imprimeMatriz(matrizComposta);
 
+        rotateObj(objeto1->modelMatrix,girar, 0, 1, 0);
         printf("Multiplicando matrizes Model X Id...\n");
         MultMatriz4d(objeto1->modelMatrix , matrizComposta);
         imprimeMatriz(matrizComposta);
@@ -298,6 +329,7 @@ int main(int arc, char *argv[]){
         imprimeMatriz(matrizComposta);
 
         printf("Desenhando objeto...\n");
+        
         desenhaObjeto(renderer, matrizComposta, objeto1);
 
         // render window
