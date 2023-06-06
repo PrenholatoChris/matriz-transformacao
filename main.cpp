@@ -107,6 +107,7 @@ tProj *criaProjecao(int tipo, float left, float right, float top, float bottom, 
     novaProjecao->projectionMatrix[2][2] = -2.0 / -19.0;
     novaProjecao->projectionMatrix[3][3] = 1.0;
     novaProjecao->projectionMatrix[2][3] = 1.0;
+
     return novaProjecao;
 }
 
@@ -123,16 +124,16 @@ tCamera *criaCamera(){
     }
 
     novacamera->pos[0] = 0.0;
-    novacamera->pos[0] = 0.0;
-    novacamera->pos[0] = 1.0;
+    novacamera->pos[1] = 0.0;
+    novacamera->pos[2] = 1.0;
 
     novacamera->centro[0] = 0.0;
-    novacamera->centro[0] = 0.0;
-    novacamera->centro[0] = 0.0;
+    novacamera->centro[1] = 0.0;
+    novacamera->centro[2] = 0.0;
 
     novacamera->cima[0] = 0.0;
-    novacamera->cima[0] = 1.0;
-    novacamera->cima[0] = 0.0;
+    novacamera->cima[1] = 1.0;
+    novacamera->cima[2] = 0.0;
 
     for(i=0; i<4; i++){
         for(j=0; j<4; j++)
@@ -241,12 +242,12 @@ int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
     modelMatrix[0][2] = (1-cosAng)*x*z + sinAng*y;
 
     modelMatrix[1][0] = (1-cosAng)*x*y + sinAng*z;
-    modelMatrix[1][2] = (1-cosAng)*y*y + cosAng;
-    modelMatrix[1][3] = (1-cosAng)*y*z - sinAng*x;
+    modelMatrix[1][1] = (1-cosAng)*y*y + cosAng;
+    modelMatrix[1][2] = (1-cosAng)*y*z - sinAng*x;
 
-    modelMatrix[2][3] = (1-cosAng)*x*z - sinAng*y;
-    modelMatrix[2][3] = (1-cosAng)*y*z + sinAng*x;
-    modelMatrix[2][3] = (1-cosAng)*z*z + cosAng;
+    modelMatrix[2][0] = (1-cosAng)*x*z - sinAng*y;
+    modelMatrix[2][1] = (1-cosAng)*y*z + sinAng*x;
+    modelMatrix[2][2] = (1-cosAng)*z*z + cosAng;
 
     printf("rotacionando");
     return 0;    
@@ -294,7 +295,7 @@ int main(int arc, char *argv[]){
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    char file[20] = "cubo.dcg";
+    char file[20] = "cubo3.dcg";
     // char file[20] = "quadrado.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
@@ -314,7 +315,7 @@ int main(int arc, char *argv[]){
             ang = -180;
         else
             ang += 1;
-        // translate += 10;
+        translate += 10;
 
         SDL_Delay(10);
         SDL_PollEvent(&windowEvent);
@@ -338,7 +339,7 @@ int main(int arc, char *argv[]){
         imprimeMatriz(matrizComposta);
 
         rotateObj(objeto1->modelMatrix,ang, 0, 1, 0);
-        // translateObj(objeto1->modelMatrix, translate, 0, 0);
+        translateObj(objeto1->modelMatrix, translate, 0, 0);
 
         printf("Multiplicando matrizes Model X Id...\n");
         MultMatriz4d(objeto1->modelMatrix , matrizComposta);
