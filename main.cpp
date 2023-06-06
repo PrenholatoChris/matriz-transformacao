@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 
@@ -64,7 +65,7 @@ float *multMatrizPonto4d(float **matriz, float *ponto){
     resultado = (float *) malloc(4 * sizeof(float));
 
     for(i=0; i<4; i++){
-        resultado[i] = 0.0;
+        resultado[i] = 0.0f;
         for(j=0; j<4; j++){
             resultado[i] += matriz[i][j] * ponto[j];
         }
@@ -123,16 +124,16 @@ tCamera *criaCamera(){
     }
 
     novacamera->pos[0] = 0.0;
-    novacamera->pos[0] = 0.0;
-    novacamera->pos[0] = 1.0;
+    novacamera->pos[1] = 0.0;
+    novacamera->pos[2] = 1.0;
 
     novacamera->centro[0] = 0.0;
-    novacamera->centro[0] = 0.0;
-    novacamera->centro[0] = 0.0;
+    novacamera->centro[1] = 0.0;
+    novacamera->centro[2] = 0.0;
 
     novacamera->cima[0] = 0.0;
-    novacamera->cima[0] = 1.0;
-    novacamera->cima[0] = 0.0;
+    novacamera->cima[1] = 1.0;
+    novacamera->cima[2] = 0.0;
 
     for(i=0; i<4; i++){
         for(j=0; j<4; j++)
@@ -266,7 +267,7 @@ int translateObj(float **modelMatrix, float x, float y, float z){
     matrix[1][3] = y;
     matrix[2][3] = z;
 
-    modelMatrix = matrix;
+    memcpy(modelMatrix, matrix, sizeof(float) * 16);
     return 0;
 }
 
@@ -294,7 +295,7 @@ int main(int arc, char *argv[]){
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    char file[20] = "cubo.dcg";
+    char file[20] = "piramide.dcg";
     // char file[20] = "quadrado.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
