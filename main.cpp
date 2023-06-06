@@ -7,6 +7,7 @@
 #define HEIGHT 480
 #define ORTOGONAL 0
 #define PERSPECTIVA 1
+#define MATRIXLENGTH 4
 
 typedef struct _tObj{
     int nPontos;
@@ -94,10 +95,10 @@ tProj *criaProjecao(int tipo, float left, float right, float top, float bottom, 
 
     novaProjecao = (tProj *) malloc(sizeof(tProj));
 
-    novaProjecao->projectionMatrix = (float **) malloc(sizeof(float *));
+    novaProjecao->projectionMatrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
 
     for(i=0; i<4; i++){
-        novaProjecao->projectionMatrix[i] = (float *) malloc(sizeof(float));
+        novaProjecao->projectionMatrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
         for(j=0; j<4; j++)
             novaProjecao->projectionMatrix[i][j] = 0.0;
     }
@@ -115,10 +116,10 @@ tCamera *criaCamera(){
 
     novacamera = (tCamera *) malloc(sizeof(tCamera));
 
-    novacamera->viewMatrix = (float **) malloc(sizeof(float *));
+    novacamera->viewMatrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
 
     for(i=0; i<4; i++){
-        novacamera->viewMatrix[i] = (float *) malloc(sizeof(float));
+        novacamera->viewMatrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
     }
 
     novacamera->pos[0] = 0.0;
@@ -185,9 +186,9 @@ tObjeto3d *carregaObjeto(char *nomeArquivo){
         fscanf(arquivoObj, "%d%d", &(novoObjeto->arestas[i][0]), &(novoObjeto->arestas[i][1]));
     }
 
-    novoObjeto->modelMatrix = (float **) malloc(sizeof(float *));
+    novoObjeto->modelMatrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
     for(i=0; i<4; i++){
-        novoObjeto->modelMatrix[i] = (float *) malloc(sizeof(float));
+        novoObjeto->modelMatrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
         for(j=0; j<4; j++)
             if(i==j) novoObjeto->modelMatrix[i][j] = 1.0;
             else novoObjeto->modelMatrix[i][j] = 0.0;
@@ -251,6 +252,24 @@ int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
     return 0;    
 }
 
+int translateObj(float **modelMatrix, float x, float y, float z){
+    float **matrix;
+
+    matrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
+    for (int i = 0; i < MATRIXLENGTH; i++)
+        matrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
+    
+    
+    criaIdentidade4d(matrix);
+    
+    matrix[0][3] = x;
+    matrix[1][3] = y;
+    matrix[2][3] = z;
+
+    modelMatrix = matrix;
+    return 0;
+}
+
 
 int main(int arc, char *argv[]){
     SDL_Window *window;
@@ -283,16 +302,19 @@ int main(int arc, char *argv[]){
     camera1 = criaCamera();
     projecao1 = criaProjecao(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-    matrizComposta = (float **) malloc(sizeof(float *));
+    matrizComposta = (float **) malloc(MATRIXLENGTH * sizeof(float *));
     for(i=0; i<4; i++)
-        matrizComposta[i] = (float *) malloc(sizeof(float));
+        matrizComposta[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
 
-    float girar = 0;
+    float ang = 0;
+    float translate = 10;
+
     while(!quit){
-        if(girar == 180)
-            girar = -180;
+        if(ang == 180)
+            ang = -180;
         else
-            girar += 1;
+            ang += 1;
+        // translate += 10;
 
         SDL_Delay(10);
         SDL_PollEvent(&windowEvent);
@@ -315,7 +337,9 @@ int main(int arc, char *argv[]){
         criaIdentidade4d(matrizComposta);
         imprimeMatriz(matrizComposta);
 
-        rotateObj(objeto1->modelMatrix,girar, 0, 1, 0);
+        rotateObj(objeto1->modelMatrix,ang, 0, 1, 0);
+        // translateObj(objeto1->modelMatrix, translate, 0, 0);
+
         printf("Multiplicando matrizes Model X Id...\n");
         MultMatriz4d(objeto1->modelMatrix , matrizComposta);
         imprimeMatriz(matrizComposta);
