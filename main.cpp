@@ -305,7 +305,13 @@ int translateObj(float **modelMatrix, float x, float y, float z){
     return 0;
 }
 
-int rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
+void alteraEscala(float **modelMatrix, float x, float y, float z){
+    modelMatrix[0][0] = modelMatrix[0][0]*x;
+    modelMatrix[1][1] = modelMatrix[1][1]*y;
+    modelMatrix[2][2] = modelMatrix[2][2]*z;
+}
+
+void rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
 
     ang = ang* M_PI/180;
     float sinAng = sin(ang);
@@ -330,8 +336,7 @@ int rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
     matrix[2][1] = (1-cosAng)*y*z + sinAng*x;
     matrix[2][2] = (1-cosAng)*z*z + cosAng;
 
-    MultMatriz4d(matrix, viewMatrix);
-    return 0;    
+    MultMatriz4d(matrix, viewMatrix);   
 }
 
 int main(int arc, char *argv[]){
@@ -400,7 +405,7 @@ int main(int arc, char *argv[]){
         #endif
         
         
-
+        alteraEscala(objeto1->modelMatrix, 1, 1, 1);
         // rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
         // rotateObj(objeto2->modelMatrix, ang, 0, 1, 0);
         #ifdef _DEBUG
