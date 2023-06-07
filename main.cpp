@@ -237,6 +237,7 @@ void desenhaObjeto(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
         free(ponto2);
     }
 }
+
 void desenhaEixo(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
     int i;
     float *ponto1, *ponto2;
@@ -258,7 +259,7 @@ void desenhaEixo(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
     }
 }
 
-int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
+void rotateObj(float **modelMatrix, float ang, int x, int y, int z){
 
     ang = ang* M_PI/180; //rad
     float sinAng = sin(ang);
@@ -283,9 +284,7 @@ int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
     matrix[2][1] = (1-cosAng)*y*z + sinAng*x;
     matrix[2][2] = (1-cosAng)*z*z + cosAng;
 
-    MultMatriz4d(matrix, modelMatrix);
-    // modelMatrix = matrix;
-    return 0;    
+    MultMatriz4d(matrix, modelMatrix);   
 }
 
 void translateObj(float **modelMatrix, float x, float y, float z){
@@ -338,21 +337,6 @@ void iniciaSDL(SDL_Event windowEvent, SDL_Renderer *renderer, int quit){
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
-void criaTela(SDL_Window *window, SDL_Renderer *renderer){
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
-        printf("Erro ao inicializar SDL! SDL Error: %s\n", SDL_GetError());
-        EXIT_FAILURE;
-    }
-
-    window = SDL_CreateWindow("Hello SDL World", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
-    if (window == NULL){
-        printf("Erro ao criar janela! SDL Error: %s\n", SDL_GetError());
-        EXIT_FAILURE;
-    }
-
-    renderer = SDL_CreateRenderer(window, -1, 0);
-}
-
 void rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
 
     ang = ang* M_PI/180;
@@ -393,10 +377,22 @@ int main(int arc, char *argv[]){
     float **matrizComposta;
     int i, quit = 0;
 
-    void criaTela(SDL_Window *window, SDL_Renderer *renderer);
 
-    char file[20] = "cubo3.dcg";
-    // char file[20] = "quadrado.dcg";
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+    printf("Erro ao inicializar SDL! SDL Error: %s\n", SDL_GetError());
+    EXIT_FAILURE;
+    }
+
+    window = SDL_CreateWindow("Hello SDL World", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
+    if (window == NULL){
+        printf("Erro ao criar janela! SDL Error: %s\n", SDL_GetError());
+        EXIT_FAILURE;
+    }
+
+    void criaTela(SDL_Window *window, SDL_Renderer *renderer);
+    renderer = SDL_CreateRenderer(window, -1, 0);
+
+    char file[20] = "./objetos/cubo3.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
 
