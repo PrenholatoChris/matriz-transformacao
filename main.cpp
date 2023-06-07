@@ -4,8 +4,10 @@
 #include <math.h>
 #include <SDL2/SDL.h>
 
-#define WIDTH 640
-#define HEIGHT 480
+// #define WIDTH 640
+// #define HEIGHT 480
+#define WIDTH 1920
+#define HEIGHT 1080
 #define ORTOGONAL 0
 #define PERSPECTIVA 1
 #define MATRIXLENGTH 4
@@ -108,6 +110,7 @@ tProj *criaProjecao(int tipo, float left, float right, float top, float bottom, 
     novaProjecao->projectionMatrix[2][2] = -2.0 / -19.0;
     novaProjecao->projectionMatrix[3][3] = 1.0;
     novaProjecao->projectionMatrix[2][3] = 1.0;
+
     return novaProjecao;
 }
 
@@ -176,8 +179,9 @@ tObjeto3d *carregaObjeto(char *nomeArquivo){
     novoObjeto->pontos = (float **) malloc(novoObjeto->nPontos * sizeof(float*));
 
     for(i=0; i<novoObjeto->nPontos; i++){
-        novoObjeto->pontos[i]=(float *) malloc(3 * sizeof(float));
+        novoObjeto->pontos[i]=(float *) malloc(4 * sizeof(float));
         fscanf(arquivoObj, "%f%f%f", &(novoObjeto->pontos[i][0]), &(novoObjeto->pontos[i][1]), &(novoObjeto->pontos[i][2]));
+        novoObjeto->pontos[i][3] = 1;
     }
 
     fscanf(arquivoObj, "%d", &(novoObjeto->nArestas));
@@ -230,26 +234,55 @@ void desenhaObjeto(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
         free(ponto2);
     }
 }
+void desenhaEixo(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
+    int i;
+    float *ponto1, *ponto2;
+    // SDL_RenderDrawPoint( renderer, 0, 0 );
+
+    for(i=0; i < objeto->nArestas; i++ ){
+        if(i==0)
+            SDL_SetRenderDrawColor( renderer, 0, 255, 94, 255 );
+        else if(i==1)
+            SDL_SetRenderDrawColor( renderer, 0, 136, 255, 255 );
+        else
+            SDL_SetRenderDrawColor( renderer, 255, 0, 0, 255 );
+
+        ponto1 = multMatrizPonto4d(matriz, objeto->pontos[objeto->arestas[i][0]]);
+        ponto2 = multMatrizPonto4d(matriz, objeto->pontos[objeto->arestas[i][1]]);
+        desenhaArestaViewport(renderer, ponto1, ponto2);
+        free(ponto1);
+        free(ponto2);
+    }
+}
 
 int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
 
-    ang = ang*3.141592/180; //rad
+    // ang = ang*3.141592/180; //rad
+    ang = ang* 1/180; //rad
     float sinAng = sin(ang);
     float cosAng = cos(ang);
+    float **matrix;
 
-    modelMatrix[0][0] = (1-cosAng)*x*x + cosAng;
-    modelMatrix[0][1] = (1-cosAng)*x*y - sinAng*z;
-    modelMatrix[0][2] = (1-cosAng)*x*z + sinAng*y;
+    matrix = (float**) malloc(MATRIXLENGTH * sizeof(float*));
+    for (int i = 0; i < MATRIXLENGTH; i++)
+        matrix[i] = (float*) malloc(MATRIXLENGTH * sizeof(float));
+    
+    criaIdentidade4d(matrix);
 
-    modelMatrix[1][0] = (1-cosAng)*x*y + sinAng*z;
-    modelMatrix[1][2] = (1-cosAng)*y*y + cosAng;
-    modelMatrix[1][3] = (1-cosAng)*y*z - sinAng*x;
+    matrix[0][0] = (1-cosAng)*x*x + cosAng;
+    matrix[0][1] = (1-cosAng)*x*y - sinAng*z;
+    matrix[0][2] = (1-cosAng)*x*z + sinAng*y;
 
-    modelMatrix[2][3] = (1-cosAng)*x*z - sinAng*y;
-    modelMatrix[2][3] = (1-cosAng)*y*z + sinAng*x;
-    modelMatrix[2][3] = (1-cosAng)*z*z + cosAng;
+    matrix[1][0] = (1-cosAng)*x*y + sinAng*z;
+    matrix[1][1] = (1-cosAng)*y*y + cosAng;
+    matrix[1][2] = (1-cosAng)*y*z - sinAng*x;
 
-    printf("rotacionando");
+    matrix[2][0] = (1-cosAng)*x*z - sinAng*y;
+    matrix[2][1] = (1-cosAng)*y*z + sinAng*x;
+    matrix[2][2] = (1-cosAng)*z*z + cosAng;
+
+    MultMatriz4d(matrix, modelMatrix);
+    // modelMatrix = matrix;
     return 0;    
 }
 
@@ -259,7 +292,6 @@ int translateObj(float **modelMatrix, float x, float y, float z){
     matrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
     for (int i = 0; i < MATRIXLENGTH; i++)
         matrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
-    
     
     criaIdentidade4d(matrix);
     
@@ -277,6 +309,8 @@ int main(int arc, char *argv[]){
     SDL_Event windowEvent;
     SDL_Renderer *renderer;
     tObjeto3d *objeto1;
+    tObjeto3d *objeto2;
+    tObjeto3d *eixo;
     tCamera *camera1;
     tProj *projecao1;
     float **matrizComposta;
@@ -307,15 +341,11 @@ int main(int arc, char *argv[]){
     for(i=0; i<4; i++)
         matrizComposta[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
 
-    float ang = 0;
-    float translate = 10;
+    float ang = 1;
+    float translate = 0.5;
+    translateObj(objeto1->modelMatrix, 0, 0, -6);
 
     while(!quit){
-        if(ang == 180)
-            ang = -180;
-        else
-            ang += 1;
-        // translate += 10;
 
         SDL_Delay(10);
         SDL_PollEvent(&windowEvent);
@@ -338,24 +368,29 @@ int main(int arc, char *argv[]){
         criaIdentidade4d(matrizComposta);
         imprimeMatriz(matrizComposta);
 
-        rotateObj(objeto1->modelMatrix,ang, 0, 1, 0);
-        // translateObj(objeto1->modelMatrix, translate, 0, 0);
+        rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
+
+        // rotateObj(objeto2->modelMatrix, ang, 0, 1, 0);
 
         printf("Multiplicando matrizes Model X Id...\n");
         MultMatriz4d(objeto1->modelMatrix , matrizComposta);
-        imprimeMatriz(matrizComposta);
+        // MultMatriz4d(objeto2->modelMatrix , matrizComposta);
+        // MultMatriz4d(eixo->modelMatrix , matrizComposta);
+        // imprimeMatriz(matrizComposta);
 
         printf("Multiplicando matrizes View X Model...\n");
         MultMatriz4d(camera1->viewMatrix , matrizComposta);
-        imprimeMatriz(matrizComposta);
+        // imprimeMatriz(matrizComposta);
 
         printf("Multiplicando matrizes Projecao X View X Model...\n");
         MultMatriz4d(projecao1->projectionMatrix , matrizComposta);
-        imprimeMatriz(matrizComposta);
+        // imprimeMatriz(matrizComposta);
 
         printf("Desenhando objeto...\n");
         
         desenhaObjeto(renderer, matrizComposta, objeto1);
+        // desenhaObjeto(renderer, matrizComposta, objeto2);
+        // desenhaEixo(renderer, matrizComposta, eixo);
 
         // render window
 
