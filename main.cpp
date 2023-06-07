@@ -3,6 +3,7 @@
 #include <math.h>
 #include <SDL2/SDL.h>
 
+// #define _DEBUG
 // #define WIDTH 640
 // #define HEIGHT 480
 #define WIDTH 1920
@@ -154,7 +155,9 @@ void desenhaArestaViewport(SDL_Renderer *renderer, float *ponto1, float *ponto2)
     p1y = (1-ponto1[1]) * HEIGHT/2;
     p2x = ((ponto2[0])+1) * WIDTH/2;
     p2y = (1-ponto2[1]) * HEIGHT/2;
-    printf("Desenhando (%d, %d) -- (%d, %d)\n", p1x, p1y, p2x, p2y);
+    #ifdef _DEBUG
+        printf("Desenhando (%d, %d) -- (%d, %d)\n", p1x, p1y, p2x, p2y);
+    #endif
     SDL_RenderDrawLine(renderer, p1x, p1y, p2x, p2y);
 
     return;
@@ -256,8 +259,7 @@ void desenhaEixo(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
 
 int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
 
-    // ang = ang*3.141592/180; //rad
-    ang = ang* 1/180; //rad
+    ang = ang* M_PI/180; //rad
     float sinAng = sin(ang);
     float cosAng = cos(ang);
     float **matrix;
@@ -303,6 +305,34 @@ int translateObj(float **modelMatrix, float x, float y, float z){
     return 0;
 }
 
+int rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
+
+    ang = ang* M_PI/180;
+    float sinAng = sin(ang);
+    float cosAng = cos(ang);
+    float **matrix;
+
+    matrix = (float**) malloc(MATRIXLENGTH * sizeof(float*));
+    for (int i = 0; i < MATRIXLENGTH; i++)
+        matrix[i] = (float*) malloc(MATRIXLENGTH * sizeof(float));
+    
+    criaIdentidade4d(matrix);
+
+    matrix[0][0] = (1-cosAng)*x*x + cosAng;
+    matrix[0][1] = (1-cosAng)*x*y - sinAng*z;
+    matrix[0][2] = (1-cosAng)*x*z + sinAng*y;
+
+    matrix[1][0] = (1-cosAng)*x*y + sinAng*z;
+    matrix[1][1] = (1-cosAng)*y*y + cosAng;
+    matrix[1][2] = (1-cosAng)*y*z - sinAng*x;
+
+    matrix[2][0] = (1-cosAng)*x*z - sinAng*y;
+    matrix[2][1] = (1-cosAng)*y*z + sinAng*x;
+    matrix[2][2] = (1-cosAng)*z*z + cosAng;
+
+    MultMatriz4d(matrix, viewMatrix);
+    return 0;    
+}
 
 int main(int arc, char *argv[]){
     SDL_Window *window;
@@ -348,7 +378,7 @@ int main(int arc, char *argv[]){
 
     float ang = 1;
     float translate = 0.5;
-    translateObj(objeto1->modelMatrix, 0, 0, -6);
+    // translateObj(objeto1->modelMatrix, 0, 0, -6);
 
     while(!quit){
 
@@ -362,43 +392,53 @@ int main(int arc, char *argv[]){
         }
 
         // clear window
-
         SDL_SetRenderDrawColor(renderer, 242, 242, 242, 255);
         SDL_RenderClear(renderer);
 
         // TODO rendering code goes here
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-        printf("Cria identidade...\n");
         criaIdentidade4d(matrizComposta);
-        imprimeMatriz(matrizComposta);
+        #ifdef _DEBUG
+            printf("Cria identidade...\n");
+            imprimeMatriz(matrizComposta);
+        #endif
+        
+        
 
-        rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
-
+        // rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
         // rotateObj(objeto2->modelMatrix, ang, 0, 1, 0);
-
-        printf("Multiplicando matrizes Model X Id...\n");
+        #ifdef _DEBUG
+            printf("Multiplicando matrizes Model X Id...\n");
+        #endif
         MultMatriz4d(objeto1->modelMatrix , matrizComposta);
         // MultMatriz4d(objeto2->modelMatrix , matrizComposta);
         // MultMatriz4d(eixo->modelMatrix , matrizComposta);
         // imprimeMatriz(matrizComposta);
-
-        printf("Multiplicando matrizes View X Model...\n");
+        
+        rotateCamera(camera1->viewMatrix, ang, 0, 1, 0);
         MultMatriz4d(camera1->viewMatrix , matrizComposta);
-        // imprimeMatriz(matrizComposta);
+        #ifdef _DEBUG
+            printf("Multiplicando matrizes View X Model...\n");
+            // imprimeMatriz(matrizComposta);
+        #endif
+        
 
-        printf("Multiplicando matrizes Projecao X View X Model...\n");
         MultMatriz4d(projecao1->projectionMatrix , matrizComposta);
-        // imprimeMatriz(matrizComposta);
+        #ifdef _DEBUG
+            printf("Multiplicando matrizes Projecao X View X Model...\n");
+            imprimeMatriz(matrizComposta);
+        #endif
 
-        printf("Desenhando objeto...\n");
+        #ifdef _DEBUG
+            printf("Desenhando objeto...\n");
+        #endif
         
         desenhaObjeto(renderer, matrizComposta, objeto1);
         // desenhaObjeto(renderer, matrizComposta, objeto2);
         // desenhaEixo(renderer, matrizComposta, eixo);
 
         // render window
-
         SDL_RenderPresent(renderer);
     }
 
