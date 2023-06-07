@@ -288,7 +288,7 @@ int rotateObj(float **modelMatrix, float ang, int x, int y, int z){
     return 0;    
 }
 
-int translateObj(float **modelMatrix, float x, float y, float z){
+void translateObj(float **modelMatrix, float x, float y, float z){
     float **matrix;
 
     matrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
@@ -301,8 +301,7 @@ int translateObj(float **modelMatrix, float x, float y, float z){
     matrix[1][3] = y;
     matrix[2][3] = z;
 
-    memcpy(modelMatrix, matrix, sizeof(float) * 16);
-    return 0;
+    MultMatriz4d(matrix, modelMatrix);
 }
 
 void alteraEscala(float **modelMatrix, float x, float y, float z){
@@ -337,6 +336,21 @@ void iniciaSDL(SDL_Event windowEvent, SDL_Renderer *renderer, int quit){
 
     // TODO rendering code goes here
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+}
+
+void criaTela(SDL_Window *window, SDL_Renderer *renderer){
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+        printf("Erro ao inicializar SDL! SDL Error: %s\n", SDL_GetError());
+        EXIT_FAILURE;
+    }
+
+    window = SDL_CreateWindow("Hello SDL World", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
+    if (window == NULL){
+        printf("Erro ao criar janela! SDL Error: %s\n", SDL_GetError());
+        EXIT_FAILURE;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
 }
 
 void rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
@@ -379,20 +393,9 @@ int main(int arc, char *argv[]){
     float **matrizComposta;
     int i, quit = 0;
 
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
-        printf("Erro ao inicializar SDL! SDL Error: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
+    void criaTela(SDL_Window *window, SDL_Renderer *renderer);
 
-    window = SDL_CreateWindow("Hello SDL World", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
-    if (window == NULL){
-        printf("Erro ao criar janela! SDL Error: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
-
-    renderer = SDL_CreateRenderer(window, -1, 0);
-
-    char file[20] = "piramide.dcg";
+    char file[20] = "cubo3.dcg";
     // char file[20] = "quadrado.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
@@ -418,7 +421,7 @@ int main(int arc, char *argv[]){
         #endif
         
         
-        alteraEscala(objeto1->modelMatrix, 1, 1, 1);
+        alteraEscala(objeto1->modelMatrix, 1, 1, 2);
         // rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
         // rotateObj(objeto2->modelMatrix, ang, 0, 1, 0);
         #ifdef _DEBUG
