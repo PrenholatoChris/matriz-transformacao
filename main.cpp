@@ -306,9 +306,37 @@ int translateObj(float **modelMatrix, float x, float y, float z){
 }
 
 void alteraEscala(float **modelMatrix, float x, float y, float z){
-    modelMatrix[0][0] = modelMatrix[0][0]*x;
-    modelMatrix[1][1] = modelMatrix[1][1]*y;
-    modelMatrix[2][2] = modelMatrix[2][2]*z;
+
+    float **matrix;
+    matrix = (float**) malloc(MATRIXLENGTH * sizeof(float*));
+    for (int i = 0; i < MATRIXLENGTH; i++)
+        matrix[i] = (float*) malloc(MATRIXLENGTH * sizeof(float));
+    
+    criaIdentidade4d(matrix);
+
+    matrix[0][0] = matrix[0][0]*x;
+    matrix[1][1] = matrix[1][1]*y;
+    matrix[2][2] = matrix[2][2]*z;
+
+    MultMatriz4d(matrix, modelMatrix);   
+}
+
+void iniciaSDL(SDL_Event windowEvent, SDL_Renderer *renderer, int quit){
+    SDL_Delay(10);
+    SDL_PollEvent(&windowEvent);
+    switch (windowEvent.type){
+        case SDL_QUIT:
+            quit = 1;
+            break;
+        // TODO input handling code goes here
+    }
+
+    // clear window
+    SDL_SetRenderDrawColor(renderer, 242, 242, 242, 255);
+    SDL_RenderClear(renderer);
+
+    // TODO rendering code goes here
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
 void rotateCamera(float **viewMatrix, float ang, float x, float y, float z){
@@ -382,22 +410,7 @@ int main(int arc, char *argv[]){
 
     while(!quit){
 
-        SDL_Delay(10);
-        SDL_PollEvent(&windowEvent);
-        switch (windowEvent.type){
-            case SDL_QUIT:
-                quit = 1;
-                break;
-            // TODO input handling code goes here
-        }
-
-        // clear window
-        SDL_SetRenderDrawColor(renderer, 242, 242, 242, 255);
-        SDL_RenderClear(renderer);
-
-        // TODO rendering code goes here
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
+        iniciaSDL(windowEvent, renderer, quit);
         criaIdentidade4d(matrizComposta);
         #ifdef _DEBUG
             printf("Cria identidade...\n");
