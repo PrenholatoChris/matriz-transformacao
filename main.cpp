@@ -312,9 +312,9 @@ void alteraEscala(float **modelMatrix, float x, float y, float z){
     
     criaIdentidade4d(matrix);
 
-    matrix[0][0] = matrix[0][0]*x;
-    matrix[1][1] = matrix[1][1]*y;
-    matrix[2][2] = matrix[2][2]*z;
+    matrix[0][0] = x;
+    matrix[1][1] = y;
+    matrix[2][2] = z;
 
     MultMatriz4d(matrix, modelMatrix);   
 }
@@ -392,7 +392,7 @@ int main(int arc, char *argv[]){
     void criaTela(SDL_Window *window, SDL_Renderer *renderer);
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    char file[20] = "./objetos/cubo3.dcg";
+    char file[40] = "./objetos/cubo3.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
 
@@ -403,9 +403,10 @@ int main(int arc, char *argv[]){
     for(i=0; i<4; i++)
         matrizComposta[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
 
-    float ang = 1;
+    float ang = 0.4;
     float translate = 0.5;
     // translateObj(objeto1->modelMatrix, 0, 0, -6);
+    alteraEscala(objeto1->modelMatrix, 2, 2, 3);
 
     while(!quit){
 
@@ -417,8 +418,7 @@ int main(int arc, char *argv[]){
         #endif
         
         
-        alteraEscala(objeto1->modelMatrix, 1, 1, 2);
-        // rotateObj(objeto1->modelMatrix, ang, 1, 1, 1);
+        rotateObj(objeto1->modelMatrix, ang, 0, 1, 0);
         // rotateObj(objeto2->modelMatrix, ang, 0, 1, 0);
         #ifdef _DEBUG
             printf("Multiplicando matrizes Model X Id...\n");
@@ -428,7 +428,7 @@ int main(int arc, char *argv[]){
         // MultMatriz4d(eixo->modelMatrix , matrizComposta);
         // imprimeMatriz(matrizComposta);
         
-        rotateCamera(camera1->viewMatrix, ang, 0, 1, 0);
+        // rotateCamera(camera1->viewMatrix, ang, 1, 1, 0);
         MultMatriz4d(camera1->viewMatrix , matrizComposta);
         #ifdef _DEBUG
             printf("Multiplicando matrizes View X Model...\n");
