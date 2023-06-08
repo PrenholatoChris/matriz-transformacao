@@ -100,7 +100,7 @@ tProj *criaProjecao(int tipo, float left, float right, float top, float bottom, 
     novaProjecao = (tProj *) malloc(sizeof(tProj));
 
     novaProjecao->projectionMatrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
-
+    
     for(i=0; i<4; i++){
         novaProjecao->projectionMatrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
         for(j=0; j<4; j++)
@@ -259,7 +259,7 @@ void desenhaEixo(SDL_Renderer *renderer, float **matriz, tObjeto3d *objeto){
     }
 }
 
-int rotate(float **modelMatrix, float ang, int x, int y, int z){
+void rotate(float **modelMatrix, float ang, int x, int y, int z){
 
     ang = ang* M_PI/180; //rad
     float sinAng = sin(ang);
@@ -337,6 +337,59 @@ void iniciaSDL(SDL_Event windowEvent, SDL_Renderer *renderer, int quit){
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
+tProj *criarFrustumProjection(float fovY, float aspectRatio,float front, float back){
+    int i,j;
+    tProj *novaProjecao;
+    novaProjecao = (tProj *) malloc(sizeof(tProj));
+    const float DEG2RAD = M_PI / 180;
+
+    float tangent = tan(fovY/2 * DEG2RAD);
+    float height = front*tangent;
+    float width = height*aspectRatio;
+
+    
+
+    novaProjecao->projectionMatrix = (float **) malloc(MATRIXLENGTH * sizeof(float *));
+    for(i=0; i<MATRIXLENGTH; i++){
+        novaProjecao->projectionMatrix[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
+        for(j=0; j<MATRIXLENGTH; j++)
+            novaProjecao->projectionMatrix[i][j] = 0.0;
+    }
+    novaProjecao->projectionMatrix[0][0] = 2.0 / 16.0;
+    novaProjecao->projectionMatrix[1][1] = 2.0 / 12.0;
+    novaProjecao->projectionMatrix[2][2] = -2.0 / -19.0;
+    novaProjecao->projectionMatrix[3][3] = 1.0;
+    novaProjecao->projectionMatrix[2][3] = 1.0;
+
+    
+    const float left = -width; 
+    const float right = width;
+    novaProjecao->left = -left;
+    novaProjecao->right = right;
+
+    const float bottom = -height;
+    const float top = height;
+    novaProjecao->bottom = bottom;
+    novaProjecao->top = top;
+
+    const float near = front;
+    const float far = back;
+    novaProjecao->near = near;
+    novaProjecao->far = far;
+
+    novaProjecao->projectionMatrix[0][0] = (2*near)/(right-left);
+    novaProjecao->projectionMatrix[1][1] = (2*near)/(top-back);
+    novaProjecao->projectionMatrix[2][2] = -(far+near)/(far-near);
+    novaProjecao->projectionMatrix[3][3] = 0;
+
+    novaProjecao->projectionMatrix[0][2] = (right+left)/(right-left);
+    novaProjecao->projectionMatrix[1][2] = (top+bottom)/(top-bottom);
+    novaProjecao->projectionMatrix[3][2] = -1;
+    novaProjecao->projectionMatrix[2][3] = -2*(far*near)/(far-near);
+
+    return novaProjecao;
+}
+
 int main(int arc, char *argv[]){
     SDL_Window *window;
     SDL_Event windowEvent;
@@ -364,21 +417,22 @@ int main(int arc, char *argv[]){
     void criaTela(SDL_Window *window, SDL_Renderer *renderer);
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    char file[40] = "./objetos/cubo3.dcg";
+    char file[40] = "./objetos/cubo.dcg";
     objeto1 = carregaObjeto(file);
     imprimeObjeto(objeto1);
 
     camera1 = criaCamera();
     projecao1 = criaProjecao(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    projecao1 = criarFrustumProjection(1, 1, -2,100);
 
     matrizComposta = (float **) malloc(MATRIXLENGTH * sizeof(float *));
     for(i=0; i<4; i++)
         matrizComposta[i] = (float *) malloc(MATRIXLENGTH * sizeof(float));
 
     float ang = 0.4;
-    float translate = 0.5;
-    // translateObj(objeto1->modelMatrix, 0, 0, -6);
-    alteraEscala(objeto1->modelMatrix, 2, 2, 3);
+    // float translate = 0.5;
+    // translate(objeto1->modelMatrix, 0, 0, -12);
+    // alteraEscala(objeto1->modelMatrix, 2, 2, 3);
 
 
     while(!quit){
@@ -405,7 +459,6 @@ int main(int arc, char *argv[]){
             imprimeMatriz(matrizComposta);
         #endif
         
-
         MultMatriz4d(projecao1->projectionMatrix , matrizComposta);
         #ifdef _DEBUG
             printf("Multiplicando matrizes Projecao X View X Model...\n");
